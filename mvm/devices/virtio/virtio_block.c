@@ -223,7 +223,7 @@ virtio_blk_proc(struct virtio_blk *blk,
 	assert(err == 0);
 }
 
-static int
+static void
 virtio_blk_notify(struct virt_queue *vq)
 {
 	int idx;
@@ -237,7 +237,7 @@ virtio_blk_notify(struct virt_queue *vq)
 		idx = virtq_get_descs(vq, vq->iovec,
 				BLOCKIF_IOV_MAX + 2, &in, &out);
 		if (idx < 0)
-			return -EINVAL;
+			return;
 
 		if (idx == vq->num) {
 			if (virtq_enable_notify(vq)) {
@@ -249,13 +249,11 @@ virtio_blk_notify(struct virt_queue *vq)
 
 		if (in) {
 			pr_err("unexpected description from guest");
-			return -EINVAL;
+			return;
 		}
 
 		virtio_blk_proc(blk, vq, idx, out);
 	}
-
-	return 0;
 }
 
 static int vblk_init_vq(struct virt_queue *vq)

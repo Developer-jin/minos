@@ -20,6 +20,8 @@
 #include <vmcs.h>
 #include <mvm_queue.h>
 
+#define MAXCOMLEN	(19)
+
 /*
  * MVM_FLAGS_NO_RAMDISK - used for linux to indicate
  * that the system has no ramdisk image

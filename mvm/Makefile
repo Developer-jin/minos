@@ -30,6 +30,7 @@ src	+= devices/virtio/virtio.c
 src	+= devices/virtio/virtio_console.c
 src	+= devices/block_if.c
 src	+= devices/virtio/virtio_block.c
+src	+= devices/virtio/virtio_net.c
 
 INCLUDE_DIR = include/libfdt include
 

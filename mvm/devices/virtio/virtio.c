@@ -377,7 +377,6 @@ static void inline virtq_reset(struct virt_queue *vq)
 	vq->used_flags = 0;
 	vq->signalled_used = 0;
 	vq->signalled_used_valid = 0;
-	vq->acked_features = 0;
 	vq->ready = 0;
 }
 
@@ -385,8 +384,12 @@ int virtio_device_reset(struct virtio_device *dev)
 {
 	int i;
 
-	for (i = 0; i < dev->nr_vq; i++)
+	for (i = 0; i < dev->nr_vq; i++) {
+		if (dev->ops && dev->ops->vq_reset)
+			dev->ops->vq_reset(&dev->vqs[i]);
+
 		virtq_reset(&dev->vqs[i]);
+	}
 
 	return 0;
 }
@@ -398,6 +401,9 @@ void virtio_device_deinit(struct virtio_device *virt_dev)
 
 	for (i = 0; i < virt_dev->nr_vq; i++) {
 		vq = &virt_dev->vqs[i];
+		if (virt_dev->ops && virt_dev->ops->vq_deinit)
+			virt_dev->ops->vq_deinit(vq);
+
 		free(vq->iovec);
 	}
 
@@ -474,6 +480,8 @@ static void inline virtio_hvm_ack(struct virtio_device *dev)
 
 static int virtio_status_event(struct virtio_device *dev, uint32_t arg)
 {
+	void *iomem = dev->vdev->iomem;
+
 	switch (arg) {
 	case VIRTIO_DEV_NEEDS_RESET:
 		break;
@@ -488,6 +496,12 @@ static int virtio_status_event(struct virtio_device *dev, uint32_t arg)
 		break;
 
 	case VIRTIO_DEV_STATUS_FEATURES_OK:
+		dev->acked_features = u32_to_u64(
+			ioread32(iomem + VIRTIO_MMIO_DRIVER_FEATURE1),
+			ioread32(iomem + VIRTIO_MMIO_DRIVER_FEATURE0));
+
+		if (dev->ops && dev->ops->neg_features)
+			dev->ops->neg_features(dev);
 		break;
 
 	case VIRTIO_DEV_STATUS_FAILED:
@@ -513,7 +527,7 @@ static int virtio_queue_event(struct virtio_device *dev, uint32_t arg)
 	}
 
 	if (queue->callback)
-		return queue->callback(queue);
+		queue->callback(queue);
 	else
 		pr_err("no callback for this virt queue\n");
 
@@ -560,15 +574,10 @@ static int virtio_buffer_event(struct virtio_device *dev, uint32_t arg)
 	vq->last_used_idx = 0;
 	vq->signalled_used = 0;
 	vq->signalled_used_valid = 0;
-
-	vq->acked_features = u32_to_u64(
-			ioread32(iomem + VIRTIO_MMIO_DRIVER_FEATURE1),
-			ioread32(iomem + VIRTIO_MMIO_DRIVER_FEATURE0));
 	vq->ready = 1;
 
 	if (dev->ops && dev->ops->vq_init)
-		return dev->ops->vq_init(vq);
-
+		dev->ops->vq_init(vq);
 
 	return 0;
 }
