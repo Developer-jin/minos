@@ -11,8 +11,8 @@
 #define CONFIG_MINOS_RAM_SIZE		(64 * 1024 *1024)
 
 #define CONFIG_MAX_CPU_NR		(8)
-#define CONFIG_NR_CPUS			(4)
-#define CONFIG_NR_CPUS_CLUSTER0		(4)
+#define CONFIG_NR_CPUS			(2)
+#define CONFIG_NR_CPUS_CLUSTER0		(2)
 #define CONFIG_NR_CPUS_CLUSTER1		(0)
 #define CONFIG_MAX_VM			(64)
 

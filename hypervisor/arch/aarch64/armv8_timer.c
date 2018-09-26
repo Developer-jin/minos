@@ -174,13 +174,20 @@ static int sched_timer_handler(uint32_t irq, void *data)
 
 static int virtual_timer_irq_handler(uint32_t irq, void *data)
 {
+	uint32_t value;
+	struct vcpu *vcpu = current_vcpu;
+
 	/* if the current vcpu is idle, disable the vtimer */
-	if (current_vcpu->is_idle) {
+	if (vcpu->is_idle) {
 		write_sysreg32(0, CNTV_CTL_EL0);
 		return -ENOENT;
 	}
 
-	return send_hirq_to_vcpu(current_vcpu, irq);
+	value = read_sysreg32(CNTV_CTL_EL0);
+	value |= CNT_CTL_IMASK;
+	value &= ~CNT_CTL_ISTATUS;
+	write_sysreg32(value | CNT_CTL_IMASK, CNTV_CTL_EL0);
+	return send_virq_to_vcpu(vcpu, irq);
 }
 
 static int timers_init(void)
@@ -213,7 +220,7 @@ static int timers_init(void)
 	info = &timer_info[VIRT_TIMER];
 	if (info->irq) {
 		request_irq(info->irq, virtual_timer_irq_handler,
-			IRQ_FLAGS_VCPU | (info->flags & 0xf),
+			(info->flags & 0xf),
 			"virt timer irq", NULL);
 	}
 
