@@ -211,9 +211,8 @@ virtio_net_tx_stop(struct virtio_net *net)
 /*
  * Called to send a buffer chain out to the tap device
  */
-static void
-virtio_net_tap_tx(struct virtio_net *net, struct iovec *iov, int iovcnt,
-		  int len)
+static void virtio_net_tap_tx(struct virtio_net *net,
+		struct iovec *iov, int iovcnt, int len)
 {
 	static char pad[60]; /* all zero bytes */
 	ssize_t ret;
@@ -602,7 +601,6 @@ virtio_net_ping_rxq(struct virt_queue *vq)
 static void
 virtio_net_proctx(struct virtio_net *net, struct virt_queue *vq)
 {
-	struct iovec iov[VIRTIO_NET_MAXSEGS + 1];
 	int i;
 	int plen, tlen;
 	uint16_t idx;
@@ -617,19 +615,22 @@ virtio_net_proctx(struct virtio_net *net, struct virt_queue *vq)
 	if (idx < 0)
 		return;
 
+	if (idx == vq->num)
+		return;
+
 	assert( out >= 1 && out <= VIRTIO_NET_MAXSEGS);
 	plen = 0;
-	tlen = iov[0].iov_len;
+	tlen = vq->iovec[0].iov_len;
 	for (i = 1; i < out; i++) {
-		plen += iov[i].iov_len;
-		tlen += iov[i].iov_len;
+		plen += vq->iovec[i].iov_len;
+		tlen += vq->iovec[i].iov_len;
 	}
 
 	pr_info("virtio: packet send, %d bytes, %d segs\n\r", plen, out);
-	net->virtio_net_tx(net, &iov[1], out - 1, plen);
+	net->virtio_net_tx(net, &vq->iovec[1], out - 1, plen);
 
 	/* chain is processed, release it and set tlen */
-	virtq_add_used_and_signal(vq, idx, tlen);
+	virtq_add_used(vq, idx, tlen);
 }
 
 static void
@@ -679,9 +680,9 @@ virtio_net_tx_thread(void *param)
 	for (;;) {
 		/* note - tx mutex is locked here */
 		while (net->resetting || !virtq_has_descs(vq)) {
-			vq->used->flags &= ~VRING_USED_F_NO_NOTIFY;
+			virtq_enable_notify(vq);
 			/* memory barrier */
-			//dsb();
+			dsb();
 			if (!net->resetting && virtq_has_descs(vq))
 				break;
 
@@ -694,7 +695,8 @@ virtio_net_tx_thread(void *param)
 				return NULL;
 			}
 		}
-		vq->used->flags |= VRING_USED_F_NO_NOTIFY;
+
+		virtq_disable_notify(vq);
 		net->tx_in_progress = 1;
 		pthread_mutex_unlock(&net->tx_mtx);
 
@@ -710,6 +712,7 @@ virtio_net_tx_thread(void *param)
 		/*
 		 * Generate an interrupt if needed.
 		 */
+		virtq_enable_notify(vq);
 		virtq_notify(vq);
 
 		pthread_mutex_lock(&net->tx_mtx);
@@ -783,16 +786,16 @@ virtio_net_tap_open(char *devname)
 static void
 virtio_net_tap_setup(struct virtio_net *net, char *devname)
 {
-	char tbuf[80 + 5];	/* room for "acrn_" prefix */
+	char tbuf[80 + 6];	/* room for "minos_" prefix */
 	char *tbuf_ptr;
 
 	tbuf_ptr = tbuf;
 
-	strcpy(tbuf, "acrn_");
+	strcpy(tbuf, "minos_");
 
-	tbuf_ptr += 5;
+	tbuf_ptr += 6;
 
-	strncat(tbuf_ptr, devname, sizeof(tbuf) - 6);
+	strncat(tbuf_ptr, devname, sizeof(tbuf) - 7);
 
 	net->virtio_net_rx = virtio_net_tap_rx;
 	net->virtio_net_tx = virtio_net_tap_tx;
@@ -907,13 +910,14 @@ static int virtio_net_init(struct vdev *vdev, char *opts)
 	}
 
 	vdev_set_pdata(vdev, net);
-	net->config = (struct virtio_net_config *)net->virtio_dev.config;
 	net->virtio_dev.ops = &vnet_ops;
+	net->config = (struct virtio_net_config *)net->virtio_dev.config;
 
 	/* init mutex attribute properly to avoid deadlock */
 	rc = pthread_mutexattr_init(&attr);
 	if (rc)
 		pr_info("mutexattr init failed with erro %d!\n", rc);
+
 	rc = pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
 	if (rc)
 		pr_info("virtio_net: mutexattr_settype failed with "
@@ -943,7 +947,7 @@ static int virtio_net_init(struct vdev *vdev, char *opts)
 		devname = vtopts = strdup(opts);
 		if (!devname) {
 			pr_warn("virtio_net: strdup returns NULL\n");
-			return -1;
+			goto error;
 		}
 
 		(void) strsep(&vtopts, ",");
@@ -952,7 +956,7 @@ static int virtio_net_init(struct vdev *vdev, char *opts)
 			err = virtio_net_parsemac(vtopts, net->config->mac);
 			if (err != 0) {
 				free(devname);
-				return err;
+				goto error;
 			}
 			mac_provided = 1;
 		}
@@ -1007,6 +1011,12 @@ static int virtio_net_init(struct vdev *vdev, char *opts)
 	pthread_setname_np(net->tx_tid, tname);
 
 	return 0;
+
+error:
+	virtio_device_deinit(&net->virtio_dev);
+	free(net);
+
+	return -EFAULT;
 }
 
 static void

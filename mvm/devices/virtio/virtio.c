@@ -128,9 +128,9 @@ int virtq_enable_notify(struct virt_queue *vq)
 		return 0;
 
 	vq->used_flags &= ~VRING_USED_F_NO_NOTIFY;
-	if (!virtq_has_feature(vq, VIRTIO_RING_F_EVENT_IDX)) {
+	if (!virtq_has_feature(vq, VIRTIO_RING_F_EVENT_IDX))
 		virtq_update_used_flags(vq);
-	} else
+	else
 		virtq_update_avail_event(vq, vq->avail_idx);
 
 	avail_idx = vq->avail->idx;
@@ -350,7 +350,7 @@ static int __virtio_vdev_init(struct vdev *vdev,
 	vdev->guest_iomem = (unsigned long)ioread32(base +
 			VIRTIO_MMIO_GVM_ADDR);
 
-	pr_debug("vdev : irq-%d 0x%lx 0x%lx\n", vdev->gvm_irq,
+	pr_debug("vdev : irq-%d gpa-0x%lx gva-0x%lx\n", vdev->gvm_irq,
 			(unsigned long)vdev->iomem, vdev->guest_iomem);
 
 	if (rs > VIRTQUEUE_MAX_SIZE)

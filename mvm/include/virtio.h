@@ -49,7 +49,7 @@
 #define VIRTIO_DEV_NEEDS_RESET		(64)
 #define VIRTIO_DEV_STATUS_FAILED	(128)
 
-#define VIRTQUEUE_MAX_SIZE		(512)
+#define VIRTQUEUE_MAX_SIZE		(1024)
 #define VIRTIO_MAX_FEATURE_SIZE		(4)
 
 #define u32_to_u64(high, low) \
