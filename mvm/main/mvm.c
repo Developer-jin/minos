@@ -420,6 +420,7 @@ static void vmcs_ack(struct vmcs *vmcs)
 		return;
 
 	vmcs->guest_index++;
+	isb();
 
 	if (vmcs->guest_index < vmcs->host_index)
 		pr_warn("something wrong or there are new message\n");

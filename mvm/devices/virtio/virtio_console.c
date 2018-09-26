@@ -281,6 +281,7 @@ virtio_console_announce_port(struct virtio_console_port *port)
 	virtio_console_control_send(port->console, &event, NULL, 0);
 
 	event.event = VIRTIO_CONSOLE_PORT_NAME;
+	pr_info("control send event %d %d\n", event.event, event.value);
 	virtio_console_control_send(port->console, &event, port->name,
 	    strlen(port->name));
 }
@@ -898,6 +899,8 @@ static int virtio_console_reset(struct vdev *vdev)
 	vcon = (struct virtio_console *)vdev_get_pdata(vdev);
 	if (!vcon)
 		return -EINVAL;
+
+	vcon->ready = false;
 
 	return virtio_device_reset(&vcon->virtio_dev);
 }
