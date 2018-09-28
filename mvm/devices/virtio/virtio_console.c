@@ -238,6 +238,8 @@ virtio_console_control_tx(struct virtio_console_port *port, void *arg,
 	console = port->console;
 	ctrl = (struct virtio_console_control *)iov->iov_base;
 
+	pr_info("get virtio event %d\n", ctrl->event);
+
 	switch (ctrl->event) {
 	case VIRTIO_CONSOLE_DEVICE_READY:
 		console->ready = true;
@@ -319,6 +321,7 @@ virtio_console_control_send(struct virtio_console *console,
 
 	idx = virtq_get_descs(vq, &iov, 1, &in, &out);
 
+	pr_info("send event %d\n", ctrl->event);
 	memcpy(iov.iov_base, ctrl, sizeof(struct virtio_console_control));
 	if (payload != NULL && len > 0)
 		memcpy(iov.iov_base + sizeof(struct virtio_console_control),
@@ -360,6 +363,9 @@ virtio_console_notify_tx(struct virt_queue *vq)
 			pr_err("unexpected description from guest\n");
 			break;
 		}
+
+		if (vq->vq_index == 3)
+			pr_info("recevie %d buffer\n", out);
 
 		if (port != NULL)
 			port->cb(port, port->arg, vq->iovec, out);

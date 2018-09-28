@@ -22,9 +22,8 @@
 #include <asm/asm_marco.S>
 
 	.global flush_dcache_range
-	.global clean_dcache_range
 	.global inv_dcache_range
-	.global inv_unified_dcache
+	.global inv_dcache_all
 	.global flush_dcache_all
 	.global flush_cache_all
 
@@ -59,7 +58,6 @@ exit_loop_\op:
 	ret
 .endm
 
-
 func flush_dcache_range
 	do_dcache_maintenance_by_mva civac
 endfunc flush_dcache_range
@@ -68,7 +66,7 @@ func inv_dcache_range
 	do_dcache_maintenance_by_mva ivac
 endfunc inv_dcache_range
 
-func inv_unified_dcache
+func inv_dcache_all
 	// From the ARM ARMv8-A Architecture Reference Manual
 	dmb	ish                   // ensure all prior inner-shareable accesses have been observed
 	mrs	x0, CLIDR_EL1
@@ -112,7 +110,7 @@ next_level:
 	isb
 finished:
 	ret
-endfunc inv_unified_dcache
+endfunc inv_dcache_all
 
 func flush_dcache_all
 	dmb	sy				// ensure ordering with previous memory accesses

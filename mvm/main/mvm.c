@@ -429,16 +429,20 @@ static void vmcs_ack(struct vmcs *vmcs)
 static int vcpu_handle_mmio(struct vm *vm, int trap_reason,
 		uint64_t trap_data, uint64_t *trap_result)
 {
+	int ret = -EIO;
 	struct vdev *vdev;
 
 	list_for_each_entry(vdev, &vm->vdev_list, list) {
 		if ((trap_data >= vdev->guest_iomem) &&
-				(trap_data < vdev->guest_iomem + PAGE_SIZE))
-			return vdev->ops->handle_event(vdev, trap_reason,
+				(trap_data < vdev->guest_iomem + PAGE_SIZE)) {
+			pthread_mutex_lock(&vdev->lock);
+			ret = vdev->ops->handle_event(vdev, trap_reason,
 					trap_data, trap_result);
+			pthread_mutex_unlock(&vdev->lock);
+		}
 	}
 
-	return -EIO;
+	return ret;
 }
 
 static int vcpu_handle_common_trap(struct vm *vm, int trap_reason,
