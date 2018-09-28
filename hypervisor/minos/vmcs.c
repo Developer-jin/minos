@@ -25,6 +25,7 @@ int __vcpu_trap(uint32_t type, uint32_t reason,
 	struct vcpu *vcpu = current_vcpu;
 	struct vmcs *vmcs = vcpu->vmcs;
 	struct vm *vm = get_vm_by_id(0);
+	struct vcpu *vm0_vcpu0;
 
 	if (vcpu->vmcs_irq < 0) {
 		pr_error("no hvm irq for this vcpu\n");
@@ -54,6 +55,10 @@ int __vcpu_trap(uint32_t type, uint32_t reason,
 
 	dsb();
 	send_virq_to_vm(get_vm_by_id(0), vcpu->vmcs_irq);
+
+	vm0_vcpu0 = get_vcpu_by_id(0, 0);
+	if (vcpu->affinity == vm0_vcpu0->affinity)
+		nonblock = 0;
 
 	/*
 	 * if gvm's vcpu is on the same pcpu which hvm
