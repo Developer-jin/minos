@@ -597,7 +597,7 @@ static int virtio_mmio_write(struct virtio_device *dev,
 {
 	int ret = 0;
 	unsigned long offset;
-	uint32_t arg;
+	uint32_t arg = (uint32_t)(*value);
 	void *iomem = dev->vdev->iomem;
 
 	offset = addr - dev->vdev->guest_iomem;
@@ -613,7 +613,6 @@ static int virtio_mmio_write(struct virtio_device *dev,
 		break;
 
 	case VIRTIO_MMIO_QUEUE_NOTIFY:
-		arg = ioread32(iomem + VIRTIO_MMIO_QUEUE_NOTIFY);
 		if (arg == 3)
 			pr_info("queue is ready %d %d\n", arg, pthread_self());
 		ret = virtio_queue_event(dev, arg);

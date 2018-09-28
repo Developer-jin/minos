@@ -248,7 +248,7 @@ static int fdt_setup_minos(struct vm *vm)
 	for (i = 0; i < vspi_nr; i++) {
 		*array++ = cpu_to_fdt32(0);
 		*array++ = cpu_to_fdt32(i);
-		*array++ = cpu_to_fdt32(4);
+		*array++ = cpu_to_fdt32(1);
 		size += (3 * sizeof(uint32_t));
 	}
 
