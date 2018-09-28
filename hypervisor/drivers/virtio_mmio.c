@@ -97,7 +97,10 @@ static int virtio_mmio_write(struct vdev *vdev, gp_regs *regs,
 		 * indicate a queue is ready, need send a
 		 * event to hvm ?
 		 */
+		if (value == 3)
+			printf("---- vq notify 3\n");
 		iowrite32(iomem + VIRTIO_MMIO_QUEUE_NOTIFY, value);
+		dsb();
 		trap_vcpu_nonblock(VMTRAP_TYPE_MMIO, VMTRAP_REASON_WRITE,
 				address, (uint64_t *)write_value);
 		break;

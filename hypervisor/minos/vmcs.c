@@ -52,7 +52,7 @@ int __vcpu_trap(uint32_t type, uint32_t reason,
 	vmcs->trap_ret = 0;
 	vmcs->host_index++;
 
-	dsb();
+	isb();
 	send_virq_to_vm(get_vm_by_id(0), vcpu->vmcs_irq);
 
 	/*

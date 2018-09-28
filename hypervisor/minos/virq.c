@@ -46,10 +46,11 @@ static int __send_virq(struct vcpu *vcpu,
 		uint32_t vno, uint32_t hno, int hw, int pr)
 {
 	int index;
+	unsigned long flags;
 	struct virq *virq;
 	struct virq_struct *virq_struct = vcpu->virq_struct;
 
-	spin_lock(&virq_struct->lock);
+	spin_lock_irqsave(&virq_struct->lock, flags);
 
 	/*
 	 * The following cases are considered software programming
@@ -75,10 +76,15 @@ static int __send_virq(struct vcpu *vcpu,
 		virq = &virq_struct->virqs[index];
 		if (virq->v_intno == vno) {
 			if (virq->state == VIRQ_STATE_PENDING) {
-				spin_unlock(&virq_struct->lock);
+				if ((vno == 33) || (vno == 34))
+					printf("------1\n");
+				spin_unlock_irqrestore(&virq_struct->lock, flags);
 				return 0;
-			} else
+			} else {
+				if ((vno == 33) || (vno == 34))
+					printf("------2\n");
 				goto out;
+			}
 		}
 	}
 
@@ -106,7 +112,7 @@ out:
 	if (virq->list.next == NULL)
 		list_add_tail(&virq_struct->pending_list, &virq->list);
 
-	spin_unlock(&virq_struct->lock);
+	spin_unlock_irqrestore(&virq_struct->lock, flags);
 
 	return 0;
 }
@@ -121,8 +127,10 @@ static int inline send_virq(struct vcpu *vcpu, struct virq_desc *desc, int hw)
 
 	/* do not send irq to vm if not online or suspend state */
 	if ((vm->state == VM_STAT_OFFLINE) ||
-			(vm->state == VM_STAT_REBOOT))
+			(vm->state == VM_STAT_REBOOT)) {
+		pr_warn("send virq failed vm is offline or reboot\n");
 		return -EINVAL;
+	}
 
 	/*
 	 * check the state of the vm, if the vm
@@ -131,8 +139,10 @@ static int inline send_virq(struct vcpu *vcpu, struct virq_desc *desc, int hw)
 	 * need to kick the vcpu
 	 */
 	if (vm->state == VM_STAT_SUSPEND) {
-		if (!(desc->flags & VIRQ_FLAGS_CAN_WAKEUP))
+		if (!(desc->flags & VIRQ_FLAGS_CAN_WAKEUP)) {
+			pr_warn("send virq failed vm is suspend\n");
 			return -EAGAIN;
+		}
 	}
 
 	ret = __send_virq(vcpu, desc->vno, desc->hno, hw, desc->pr);
@@ -285,8 +295,6 @@ int send_virq_to_vcpu(struct vcpu *vcpu, uint32_t virq)
 
 int send_virq_to_vm(struct vm *vm, uint32_t virq)
 {
-	int ret;
-	unsigned long flags;
 	struct virq_desc *desc;
 	struct vcpu *vcpu;
 
@@ -306,11 +314,7 @@ int send_virq_to_vm(struct vm *vm, uint32_t virq)
 	if (!vcpu)
 		return -ENOENT;
 
-	local_irq_save(flags);
-	ret = send_virq(vcpu, desc, desc->hw);
-	local_irq_restore(flags);
-
-	return ret;
+	return send_virq(vcpu, desc, desc->hw);
 }
 
 void send_vsgi(struct vcpu *sender, uint32_t sgi, cpumask_t *cpumask)

@@ -526,6 +526,8 @@ static int virtio_queue_event(struct virtio_device *dev, uint32_t arg)
 		return -ENOENT;
 	}
 
+	if (queue->vq_index == 3)
+		pr_info("last_ava:%d ava:%d\n", queue->last_avail_idx, queue->avail->idx);
 	if (queue->callback)
 		queue->callback(queue);
 	else
@@ -612,6 +614,8 @@ static int virtio_mmio_write(struct virtio_device *dev,
 
 	case VIRTIO_MMIO_QUEUE_NOTIFY:
 		arg = ioread32(iomem + VIRTIO_MMIO_QUEUE_NOTIFY);
+		if (arg == 3)
+			pr_info("queue is ready %d %d\n", arg, pthread_self());
 		ret = virtio_queue_event(dev, arg);
 		break;
 
