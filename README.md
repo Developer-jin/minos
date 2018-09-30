@@ -4,7 +4,7 @@ Minos是一款轻量级的开源的面向移动及嵌入式平台的Type 1 Hyper
 
 Minos提供一个运行于VM0上的应用程序"mvm"来支持Guest VM的管理, 包括但不限于创建，重启，销毁VM。同时mvm提供基于virtio的半虚拟化解决方案, 支持virtio-console, virtio-blk(测试中)，virtio-net(测试中)等设备
 
-Minos适用于移动及嵌入式平台。目前只支持ARMv8-A架构，硬件平台支持Marvell的Esspressobin开发板，理论上ARMv8-A + GICV3组合的硬件平台都可以被支持。软件调试平台支持ARM官方的Fix Virtual Platform (这里简称FVP), 开发者可以用ARM DS5工具来进行仿真和调试。通过mvm工具创建的VM，也是根据FVP的硬件资源来进行虚拟的。
+Minos适用于移动及嵌入式平台。目前只支持ARMv8-A架构，硬件平台支持Marvell的Esspressobin开发板，理论上ARMv8-A + GICV3组合的硬件平台都可以被支持。软件调试平台支持ARM官方的Fix Virtual Platform (这里简称FVP), 开发者可以用ARM DS5工具来进行仿真和调试。通过mvm工具创建的VM，也是根据FVP平台虚拟出来的VM。
 
 # Download Source Code And Tools for Minos
 
@@ -13,7 +13,7 @@ Minos适用于移动及嵌入式平台。目前只支持ARMv8-A架构，硬件�
         # mkdir ~/minos-workspace
         # cd ~/minos-workspace
 
-2. 下载gcc交叉编译工具
+2. 安装gcc交叉编译工具
 
         # wget https://releases.linaro.org/components/toolchain/binaries/latest/aarch64-linux-gnu/gcc-linaro-7.3.1-2018.05-x86_64_aarch64-linux-gnu.tar.xz
         # tar xjf gcc-linaro-7.3.1-2018.05-x86_64_aarch64-linux-gnu.tar.xz
@@ -21,13 +21,13 @@ Minos适用于移动及嵌入式平台。目前只支持ARMv8-A架构，硬件�
         # echo "export PATH=/opt/gcc-linaro-7.3.1-2018.05-x86_64_aarch64-linux-gnu/bin:$PATH" >> ~/.bashrc
         # source ~/.bashrc
 
-3. 下载abootimg
+3. 安装abootimg工具
 
         # sudo apt-get install abootimg
 
 	abootimg 工具用来制作android bootimge，mvm使用此格式image来加载linux内核，ramdisk和dtb文件
 
-4. 下载device tree代码编译工具
+4. 安装device tree代码编译工具
 
         # sudo apt-get install device-tree-compiler
 
@@ -92,7 +92,7 @@ Minos适用于移动及嵌入式平台。目前只支持ARMv8-A架构，硬件�
 
         # mkdir ~/minos/workspace/arm-fvp
 
-FVP可以在ARM的官网下载，Minos支持FVP_Base_AEMv8A 以及FVP_Base_Cortex-A57x2-A53x4 ，这里我们默认使用FVP_Base_AEMv8A来进行测试。另外如果想基于Minos做相关开发，也可以直接安装ARM DS5调试工具，安装完之后自带以上两个FVP。以下是安装使用DS5的相关教程
+	FVP可以在ARM的官网下载，Minos支持FVP_Base_AEMv8A 以及FVP_Base_Cortex-A57x2-A53x4 ，这里我们默认使用FVP_Base_AEMv8A来进行测试。另外如果想基于Minos做相关开发，也可以直接安装ARM DS5调试工具，安装完之后自带以上两个FVP。以下是安装使用DS5的相关教程
 
 - **ARM FVP(固定虚拟平台)Linux内核调试简明手册:**[https://www.jianshu.com/p/c0a9a4b9569d](https://www.jianshu.com/p/c0a9a4b9569d)
 
@@ -109,7 +109,7 @@ FVP可以在ARM的官网下载，Minos支持FVP_Base_AEMv8A 以及FVP_Base_Corte
 
         # make PLAT=fvp RESET_TO_BL31=1 ARM_LINUX_KERNEL_AS_BL33=1 PRELOADED_BL33_BASE=0xc0000000 ARM_PRELOADED_DTB_BASE=0x83e00000
 
-5. 下载arm64 virtio-block image
+5. 下载ARM64 virtio-block image
 
         # wget https://releases.linaro.org/archive/14.07/openembedded/aarch64/vexpress64-openembedded_minimal-armv8-gcc-4.9_20140727-682.img.gz
         # gunzip vexpress64-openembedded_minimal-armv8-gcc-4.9_20140727-682.img.gz
@@ -119,9 +119,9 @@ FVP可以在ARM的官网下载，Minos支持FVP_Base_AEMv8A 以及FVP_Base_Corte
 
         # cd ~/minos-workspace/arm-fvp
         # ln -s ~/minos-workspace/sd.img sd.img
-        # ln -s ~/minos-workspace/
+        # ln -s ~/minos-workspace/arm-trusted-firmware/build/fvp/release/bl31.bin bl31.bin
         # ln -s ~/minos-workspace/linux-marvell/arch/arm64/boot/Image Image
-        # ln -s ~/minos-workspace/minos-sample/fvp.dtb fdt.dtb
+        # ln -s ~/minos-workspace/minos-sample/foundation-v8-gicv3.dtb fdt.dtb
         # ln -s ~/minos-workspace/minos/hypervisor/out/minos.bin minos.bin
 
         # /usr/local/DS-5_v5.27.0/bin/FVP_Base_AEMv8A               \
@@ -227,5 +227,6 @@ Minos当前已经支持virtio-console后端驱动，创建完VM之后可以用mi
 
 Minos默认提供的boot.img的ramdisk使用的是busybox标准rootfs,如果需要自定义自己定制ramdisk,也和简单，只需要将制作好ramdisk.img和Image以及dtb文件重新打包:
 
-        # abootimg --create boot.img -c kerneladdr=0x80080000 -c ramdiskaddr=0x83000000 -c secondaddr=0x83e00000 -c cmdline="console=hvc0 loglevel=8 consolelog=9" -k Image -s fvp.dtb -r ramdisk.img
+        # dtc -I dts -O dtb -o guest-vm.dtb guest-vm.dts
+        # abootimg --create boot.img -c kerneladdr=0x80080000 -c ramdiskaddr=0x83000000 -c secondaddr=0x83e00000 -c cmdline="console=hvc0 loglevel=8 consolelog=9" -k Image -s guest-vm.dtb -r ramdisk.img
 
