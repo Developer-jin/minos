@@ -9,10 +9,12 @@ Minos适用于移动及嵌入式平台。当前只支持ARMv8-A架构，硬件�
 # Download Source Code And Tools for Minos
 
 1. 创建工作目录
+
         # mkdir ~/minos-workspace
         # cd ~/minos-workspace
 
 2. 下载gcc交叉编译工具
+
         # wget https://releases.linaro.org/components/toolchain/binaries/latest/aarch64-linux-gnu/gcc-linaro-7.3.1-2018.05-x86_64_aarch64-linux-gnu.tar.xz
         # tar xjf gcc-linaro-7.3.1-2018.05-x86_64_aarch64-linux-gnu.tar.xz
         # sudo mv gcc-linaro-7.3.1-2018.05-x86_64_aarch64-linux-gnu /opt
@@ -20,41 +22,66 @@ Minos适用于移动及嵌入式平台。当前只支持ARMv8-A架构，硬件�
         # source ~/.bashrc
 
 3. 下载abootimg
+
         # sudo apt-get install abootimg
+
 abootimg 工具用来制作android bootimge，mvm使用此格式image来加载linux内核，ramdisk和dtb文件
 
 4. 下载device tree代码编译工具
+
         # sudo apt-get install device-tree-compiler
 
 5. 下载minos sample
+
         # git clone 
+
 minos-sample提供Guest VM的dts文件，和以及制作好的Guest VM boot.img文件
 
 6. 下载minos hypervisor 源码
+        # git clone
+
 7. 下载linux kernel 源码
+        # git clone
+
 8. 下载atf源码
+
+        # git clone
+
 在FVP上运行和调试minos时需要用到
 
 # Run Minos on Marvel Esspressobin
+
 1. 编译Minos
+
         # make
+
 Minos默认编译平台为Marvel Esspressobin，编译完成后会在 hypervisor/out目录下生成minos.bin以及在mvm目录下生成mvm应用程序
 
 2. 编译Marvel kernel
+
+        # export ARCH=arm64
+        # export CROSS_COMPILE=aarch64-linux-gnu-
+        # make mvebu_v8_lsp_defconfig
+        # make -j4
+
 编译完成后会在arch/arm64/boot目录下生成Image 内核文件。
 
-3.Esspressobin默认的内核存放在/boot目录下，把minos.bin和新的Image拷贝到/boot目录下
+3. Esspressobin默认的内核存放在/boot目录下，把minos.bin和新的Image拷贝到/boot目录下
 
 4. 更新uboot 环境设置
+
 启动开发板到命令行状态，执行以下命令更新uboot启动设置（这里以emmc版本的esspre开发板举例，采用sd卡启动的开发板，方法类似）
 
-5 设置完之后重启开发板，下次开发板启动将会加载minos.bin, 进入虚拟化环境
+5. 设置完之后重启开发板，下次开发板启动将会加载minos.bin, 进入虚拟化环境
 
 提示: 如果因为配置错误导致系统启动不了，只需要用原来的启动参数先启动到非虚拟化环境，然后把可以正常运行的minos.bin替换就可以
 
-Run Minos on Arm FVP
+# Run Minos on Arm FVP
+
 1. 下载arm fvp 创建工作目录
+
         # mkdir arm-fvp
+
 现在arm fvp可以上arm的官网下载，Minos已经在FVP_Base_AEMv8A 以及FVP_Base_Cortex-A57x2-A53x4 上测试通过，这里我们默认使用FVP_Base_AEMv8A来进行测试。另外如果想基于Minos做相关开发，也可以安装arm ds5调试工具，安装完之后自带以上两个fvp。以下是安装使用ds5的相关教程
 
 - **ARM FVP(固定虚拟平台)Linux内核调试简明手册:**[https://www.jianshu.com/p/c0a9a4b9569d](https://www.jianshu.com/p/c0a9a4b9569d)
@@ -68,16 +95,18 @@ Run Minos on Arm FVP
         # make ARCH=arm64 defconfig && make ARCH=arm64 -j8 Image
 
 4. 编译arm trust firmware
+
         # make PLAT=fvp RESET_TO_BL31=1 ARM_LINUX_KERNEL_AS_BL33=1 PRELOADED_BL33_BASE=0xc0000000 ARM_PRELOADED_DTB_BASE=0x83e00000
 
 5. 下载arm64 virtio-block image
+
         # wget https://releases.linaro.org/archive/14.07/openembedded/aarch64/vexpress64-openembedded_minimal-armv8-gcc-4.9_20140727-682.img.gz
         # gunzip vexpress64-openembedded_minimal-armv8-gcc-4.9_20140727-682.img.gz
-mv vexpress64-openembedded_minimal-armv8-gcc-4.9_20140727-682.img sd.img
+        # mv vexpress64-openembedded_minimal-armv8-gcc-4.9_20140727-682.img sd.img
 
 6. 运行
 
-        # /usr/local/DS-5_v5.27.0/bin/FVP_Base_AEMv8A                         \
+        # /usr/local/DS-5_v5.27.0/bin/FVP_Base_AEMv8A               \
         -C pctl.startup=0.0.0.0                                     \
         -C bp.secure_memory=0                                       \
         -C cluster0.NUM_CORES=4                                     \
@@ -97,6 +126,7 @@ mv vexpress64-openembedded_minimal-armv8-gcc-4.9_20140727-682.img sd.img
         --data cluster0.cpu0=minos.bin@0xc0000000
 
 7. 运行fvp之后，可以在主机上运行以下命令通过ssh来登入fvp
+
         # ssh -p 8022 root@127.0.0.1
 
 # mvm使用方法
@@ -126,53 +156,53 @@ Usage: mvm [options]
 
 创建VM的log如下
 
-[INFO ] no rootfs is point using ramdisk if exist
-root@genericarmv8:~# [INFO ] boot image infomation :
-[INFO ] magic        - ANDROID!
-[INFO ] kernel_size  - 0x877800
-[INFO ] kernel_addr  - 0x80080000
-[INFO ] ramdisk_size - 0x104e21
-[INFO ] ramdisk_addr - 0x83000000
-[INFO ] dtb_size     - 0xcc4
-[INFO ] dtb_addr     - 0x83e00000
-[INFO ] tags_addr    - 0x0
-[INFO ] page_size    - 0x800
-[INFO ] name         - 
-[INFO ] cmdline      - console=hvc0 loglevel=8 consolelog=9
-[INFO ] create new vm *
-[INFO ]         -name       : elinux
-[INFO ]         -os_type    : linux
-[INFO ]         -nr_vcpus   : 2
-[INFO ]         -bit64      : 1
-[INFO ]         -mem_size   : 0x5400000
-[INFO ]         -mem_start  : 0x80000000
-[INFO ]         -entry      : 0x80080000
-[INFO ]         -setup_data : 0x83e00000
-[DEBUG] load kernel image: 0x80000 0x800 0x877800
-[DEBUG] load ramdisk image:0x3000000 0x878000 0x104e21
-[DEBUG] vdev : irq-32 gpa-0x7fad895000 gva-0x40000000
-[INFO ] ***********************************************
-[INFO ] virt-console backend redirected to /dev/pts/1
-[INFO ] ***********************************************
-[INFO ] add cmdline - console=hvc0 loglevel=8 consolelog=9 loglevel=8 consolelog=9
-[INFO ]         - delete cpu@2
-[INFO ]         - delete cpu@3
-[INFO ]         - delete cpu@4
-[INFO ]         - delete cpu@5
-[INFO ]         - delete cpu@6
-[INFO ]         - delete cpu@7
-[DEBUG] found 1 rsv memory region
-[DEBUG] add rsv memory region : 0x80000000 0x10000
-[INFO ] setup memory 0x0 0x80 0x0 0x4005
-[INFO ] set ramdisk : 0x83000000 0x104e21
-[INFO ] add vdev success addr-0x40000000 virq-32
-
+        [INFO ] no rootfs is point using ramdisk if exist
+        root@genericarmv8:~# [INFO ] boot image infomation :
+        [INFO ] magic        - ANDROID!
+        [INFO ] kernel_size  - 0x877800
+        [INFO ] kernel_addr  - 0x80080000
+        [INFO ] ramdisk_size - 0x104e21
+        [INFO ] ramdisk_addr - 0x83000000
+        [INFO ] dtb_size     - 0xcc4
+        [INFO ] dtb_addr     - 0x83e00000
+        [INFO ] tags_addr    - 0x0
+        [INFO ] page_size    - 0x800
+        [INFO ] name         - 
+        [INFO ] cmdline      - console=hvc0 loglevel=8 consolelog=9
+        [INFO ] create new vm *
+        [INFO ]         -name       : elinux
+        [INFO ]         -os_type    : linux
+        [INFO ]         -nr_vcpus   : 2
+        [INFO ]         -bit64      : 1
+        [INFO ]         -mem_size   : 0x5400000
+        [INFO ]         -mem_start  : 0x80000000
+        [INFO ]         -entry      : 0x80080000
+        [INFO ]         -setup_data : 0x83e00000
+        [DEBUG] load kernel image: 0x80000 0x800 0x877800
+        [DEBUG] load ramdisk image:0x3000000 0x878000 0x104e21
+        [DEBUG] vdev : irq-32 gpa-0x7fad895000 gva-0x40000000
+        [INFO ] ***********************************************
+        [INFO ] virt-console backend redirected to /dev/pts/1
+        [INFO ] ***********************************************
+        [INFO ] add cmdline - console=hvc0 loglevel=8 consolelog=9 loglevel=8 consolelog=9
+        [INFO ]         - delete cpu@2
+        [INFO ]         - delete cpu@3
+        [INFO ]         - delete cpu@4
+        [INFO ]         - delete cpu@5
+        [INFO ]         - delete cpu@6
+        [INFO ]         - delete cpu@7
+        [DEBUG] found 1 rsv memory region
+        [DEBUG] add rsv memory region : 0x80000000 0x10000
+        [INFO ] setup memory 0x0 0x80 0x0 0x4005
+        [INFO ] set ramdisk : 0x83000000 0x104e21
+        [INFO ] add vdev success addr-0x40000000 virq-32
 
 Minos当前已经支持virtio-console后端驱动，创建完vm之后可以用minicom等终端工具登入到刚才创建的VM
 
         # minicom /dev/pts/1
 
 # 制作制定义bootimage
+
 Minos默认提供的boot.img的ramdisk使用的是busybox标准rootfs,如果需要自定义自己定制ramdisk,也和简单，只需要制作好ramdisk之后 用以下命令打包:
 
         # abootimg --create boot.img -c kerneladdr=0x80080000 -c ramdiskaddr=0x83000000 -c secondaddr=0x83e00000 -c cmdline="console=hvc0 loglevel=8 consolelog=9" -k Image -s fvp.dtb -r ramdisk.img
