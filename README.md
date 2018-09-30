@@ -25,7 +25,7 @@ Minos适用于移动及嵌入式平台。当前只支持ARMv8-A架构，硬件�
 
         # sudo apt-get install abootimg
 
- abootimg 工具用来制作android bootimge，mvm使用此格式image来加载linux内核，ramdisk和dtb文件
+    abootimg 工具用来制作android bootimge，mvm使用此格式image来加载linux内核，ramdisk和dtb文件
 
 4. 下载device tree代码编译工具
 
@@ -35,7 +35,7 @@ Minos适用于移动及嵌入式平台。当前只支持ARMv8-A架构，硬件�
 
         # git clone 
 
- minos-sample提供Guest VM的dts文件，和以及制作好的Guest VM boot.img文件
+    minos-sample提供Guest VM的dts文件，和以及制作好的Guest VM boot.img文件
 
 6. 下载minos hypervisor 源码
 
@@ -48,8 +48,8 @@ Minos适用于移动及嵌入式平台。当前只支持ARMv8-A架构，硬件�
 8. 下载atf源码
 
         # git clone
-
-在FVP上运行和调试minos时需要用到
+        
+    在FVP上运行和调试minos时需要用到
 
 # Run Minos on Marvel Esspressobin
 
@@ -57,7 +57,7 @@ Minos适用于移动及嵌入式平台。当前只支持ARMv8-A架构，硬件�
 
         # make
 
- Minos默认编译平台为Marvel Esspressobin，编译完成后会在 hypervisor/out目录下生成minos.bin以及在mvm目录下生成mvm应用程序
+    Minos默认编译平台为Marvel Esspressobin，编译完成后会在 hypervisor/out目录下生成minos.bin以及在mvm目录下生成mvm应用程序
 
 2. 编译Marvel kernel
 
@@ -66,17 +66,17 @@ Minos适用于移动及嵌入式平台。当前只支持ARMv8-A架构，硬件�
         # make mvebu_v8_lsp_defconfig
         # make -j4
 
- 编译完成后会在arch/arm64/boot目录下生成Image 内核文件。
+    编译完成后会在arch/arm64/boot目录下生成Image 内核文件。
 
 3. Esspressobin默认的内核存放在/boot目录下，把minos.bin和新的Image拷贝到/boot目录下
 
 4. 更新uboot 环境设置
 
- 启动开发板到命令行状态，执行以下命令更新uboot启动设置（这里以emmc版本的esspre开发板举例，采用sd卡启动的开发板，方法类似）
+    启动开发板到命令行状态，执行以下命令更新uboot启动设置（这里以emmc版本的esspre开发板举例，采用sd卡启动的开发板，方法类似）
 
 5. 设置完之后重启开发板，下次开发板启动将会加载minos.bin, 进入虚拟化环境
 
- 提示: 如果因为配置错误导致系统启动不了，只需要用原来的启动参数先启动到非虚拟化环境，然后把可以正常运行的minos.bin替换就可以
+    提示: 如果因为配置错误导致系统启动不了，只需要用原来的启动参数先启动到非虚拟化环境，然后把可以正常运行的minos.bin替换就可以
 
 # Run Minos on Arm FVP
 
