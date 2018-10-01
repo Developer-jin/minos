@@ -87,11 +87,11 @@ Minos适用于移动及嵌入式平台。目前只支持ARMv8-A架构，支持Ma
 
 5. 设置完之后重启开发板，之后每次开机将会先跳转到Minos执行hypervisor相关设置，然后再启动VM0
 
-![Run Minos on Marvell Board](http://leyunxi.com/static/minos-marvell-00.png)
-
 	提示: 如果因为Minos代码错误导致系统启动不了，只需要用原来的启动参数先启动到非虚拟化环境，然后把能正常运行的minos.bin替换到/boot目录下就可以
 
-        # mmc dev 1; ext4load mmc 1:1 $kernel_addr $image_name; ext4load mmc 1:1 $fdt_addr $fdt_name; setenv bootargs $console root=PARTUUID=89708921-01 rw rootwait net.ifnames=0 biosdevname=0; booti $kernel_addr - $fdt_addr 
+        # mmc dev 1; ext4load mmc 1:1 $kernel_addr $image_name; ext4load mmc 1:1 $fdt_addr $fdt_name; setenv bootargs $console root=PARTUUID=89708921-01 rw rootwait net.ifnames=0 biosdevname=0; booti $kernel_addr - $fdt_addr
+
+![Run Minos on Marvell Board](http://leyunxi.com/static/minos-marvell-00.png)
 
 # Run Minos on ARM FVP
 
@@ -164,7 +164,7 @@ Minos适用于移动及嵌入式平台。目前只支持ARMv8-A架构，支持Ma
 
 Minos提供两种方式来创建VM, 一种是使用Minos源码下的JSON文件(例如hypervisor/config/fvp/fvp.json.cc)，通过创建一个vmtag的json成员来创建对应的VM，且这种VM的内存, IRQ等硬件资源都是通过对应的json文件来管理的，此方式适合用来创建嵌入式系统中拥有真实硬件权限的VM, Minos支持将特定的硬件设备分配给特定的VM。通过这种方式创建的VM当前没法被mvm管理。
 
-(```)
+```
 #include "fvp_config.h"
 {
 	"version": "0.0.1",
@@ -193,7 +193,7 @@ Minos提供两种方式来创建VM, 一种是使用Minos源码下的JSON文件(�
 		"comments": "minos virtualization config json data"
 	}
 }
-(```)
+```
 
 另外一种方式就是通过Minos提供的VM管理工具mvm来配置, 当前mvm已经支持了VM的创建，销毁，重启和关机操作。
 
